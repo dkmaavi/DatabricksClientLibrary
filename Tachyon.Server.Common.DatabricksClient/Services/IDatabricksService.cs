@@ -2,7 +2,7 @@
 
 namespace Tachyon.Server.Common.DatabricksClient.Services
 {
-    public interface IDatabricksApiService
+    public interface IDatabricksService
     {
         HttpClient CreateClient();
         StringContent CreateContent(StatementQuery sqlStatementQuery);

@@ -18,6 +18,11 @@ namespace Tachyon.Server.Common.DatabricksClient.ApiResponse
 
     public enum ErrorCode
     {
+        // Generic error codes
+        TIMEOUT,
+        PARSE_ERROR,
+
+        // Databricks error codes
         UNKNOWN,
         INTERNAL_ERROR,
         TEMPORARILY_UNAVAILABLE,

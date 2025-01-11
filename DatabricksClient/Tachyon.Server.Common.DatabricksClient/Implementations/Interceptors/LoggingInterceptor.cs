@@ -1,6 +1,5 @@
 ﻿namespace Tachyon.Server.Common.DatabricksClient.Implementations.Interceptors
 {
-    using System.Diagnostics;
     using System.Text;
     using Microsoft.Extensions.Logging;
     using Newtonsoft.Json;
@@ -9,27 +8,22 @@
     using Tachyon.Server.Common.DatabricksClient.Models.Request;
     using Tachyon.Server.Common.DatabricksClient.Models.Response;
 
-    public class LoggingInterceptor : IDatabricksInterceptor
+    internal class LoggingInterceptor : IDatabricksInterceptor
     {
         private readonly ILogger<LoggingInterceptor> logger;
-        private const string timerKey = "LoggingInterceptor.Timer";
-        private const string queryIdKey = "LoggingInterceptor.StatementQueryId";
-
+        private readonly InterceptorContext localContext = new();
         public InterceptorPriority Priority => InterceptorPriority.Normal;
-
         public LoggingInterceptor(ILogger<LoggingInterceptor> logger)
         {
             this.logger = logger;
         }
 
-        public async Task OnBeforeRequestAsync(StatementQuery statementQuery, Dictionary<string, object> properties)
+        public async Task BeforeRequestAsync(StatementQuery statementQuery)
         {
-            var queryId = Guid.NewGuid().ToString();
-            properties[queryIdKey] = queryId;
-            properties[timerKey] = Stopwatch.StartNew();
+            localContext.Timer.Start();
 
             var logMessage = new StringBuilder();
-            logMessage.AppendLine($"Query Id: {queryId}");
+            logMessage.AppendLine($"Query Id: {localContext.Id}");
             logMessage.AppendLine($"Query: {statementQuery.Statement}");
             logMessage.AppendLine($"Query Parameters: {JsonConvert.SerializeObject(statementQuery.Parameters)}");
 
@@ -38,16 +32,13 @@
             await Task.CompletedTask;
         }
 
-        public async Task OnAfterRequestAsync(StatementResult statementResult, Dictionary<string, object> properties)
+        public async Task AfterRequestAsync(StatementResult statementResult)
         {
-            var queryId = properties.GetValueOrDefault(queryIdKey) as string;
-            var timer = properties.GetValueOrDefault(timerKey) as Stopwatch;
-
-            timer?.Stop();
-            var duration = timer?.Elapsed.TotalMilliseconds ?? 0;
+            localContext.Timer?.Stop();
+            var duration = localContext.Timer?.Elapsed.TotalMilliseconds ?? 0;
 
             var logMessage = new StringBuilder();
-            logMessage.AppendLine($"Response Id: {queryId}");
+            logMessage.AppendLine($"Response Id: {localContext.Id}");
             logMessage.AppendLine($"Duration: {duration:F2}ms");
             logMessage.AppendLine($"Status: {statementResult.Status.State}");
 

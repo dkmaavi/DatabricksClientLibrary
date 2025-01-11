@@ -6,7 +6,7 @@ namespace Tachyon.Server.Common.DatabricksClient.Abstractions.Interceptors
     public interface IDatabricksInterceptor
     {
         InterceptorPriority Priority { get; }
-        Task OnBeforeRequestAsync(StatementQuery statementQuery, Dictionary<string, object> properties);
-        Task OnAfterRequestAsync(StatementResult statementResult, Dictionary<string, object> properties);
+        Task BeforeRequestAsync(StatementQuery statementQuery);
+        Task AfterRequestAsync(StatementResult statementResult);
     }
 }

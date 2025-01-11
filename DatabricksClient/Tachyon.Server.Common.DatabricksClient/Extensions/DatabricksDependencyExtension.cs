@@ -1,21 +1,24 @@
 ﻿namespace Tachyon.Server.Common.DatabricksClient.Extensions
 {
     using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.DependencyInjection.Extensions;
     using Microsoft.Extensions.Logging;
     using Polly;
     using Polly.Extensions.Http;
     using Tachyon.Server.Common.DatabricksClient.Abstractions;
     using Tachyon.Server.Common.DatabricksClient.Abstractions.Builders;
-    using Tachyon.Server.Common.DatabricksClient.Abstractions.Configuration;
     using Tachyon.Server.Common.DatabricksClient.Abstractions.Handlers;
+    using Tachyon.Server.Common.DatabricksClient.Abstractions.Services;
     using Tachyon.Server.Common.DatabricksClient.Constants;
     using Tachyon.Server.Common.DatabricksClient.Implementations;
     using Tachyon.Server.Common.DatabricksClient.Implementations.Builders;
+    using Tachyon.Server.Common.DatabricksClient.Implementations.Handlers;
+    using Tachyon.Server.Common.DatabricksClient.Implementations.Interceptors;
     using Tachyon.Server.Common.DatabricksClient.Models.Configuration;
 
     public static class DatabricksDependencyExtension
     {
-        public static IServiceCollection AddDatabricksDependency(this IServiceCollection services, Action<InterceptorPipelineBuilder>? configureInterceptors = null)
+        public static IServiceCollection AddDatabricksDependency(this IServiceCollection services, Action<IInterceptorPipelineBuilder>? configureInterceptors = null)
         {
             RegisterConfiguration(services);
 
@@ -27,36 +30,33 @@
 
             return services;
         }
-
         private static void RegisterConfiguration(IServiceCollection services)
         {
             services.AddSingleton(sp =>
             {
-                var configurationService = sp.GetRequiredService<IDatabricksConfigurationProvider>();
+                var configurationService = sp.GetRequiredService<IDatabricksConfigurationService>();
                 return configurationService.GetHttpClientSettings();
             }).AddSingleton(sp =>
             {
-                var configurationService = sp.GetRequiredService<IDatabricksConfigurationProvider>();
+                var configurationService = sp.GetRequiredService<IDatabricksConfigurationService>();
                 return configurationService.GetStatementApiSettings();
             }).AddSingleton(sp =>
             {
-                var configurationService = sp.GetRequiredService<IDatabricksConfigurationProvider>();
+                var configurationService = sp.GetRequiredService<IDatabricksConfigurationService>();
                 return configurationService.GetResilienceSettings();
             });
         }
-
         private static void RegisterServices(IServiceCollection services)
         {
-            services
-               .AddScoped<IDatabricksHttpClientBuilder, DatabricksHttpClientBuilder>()
-               .AddScoped<IDatabricksRequestBuilder, DatabricksRequestBuilder>()
-               .AddScoped<IStatementResultHandler, StatementResultHandler>()
-               .AddScoped<IDatabricksClient, DatabricksClient>();
-        }
+            services.AddScoped<IDatabricksApiClient, DatabricksApiClient>();
 
+            services.TryAddScoped<IDatabricksCommunicationService, DatabricksCommunicationService>();
+            services.TryAddScoped<IDatabricksResultHandler, DatabricksResultHandler>();
+            services.TryAddScoped<IDatabricksErrorHandler, DatabricksErrorHandler>();
+        }
         private static void RegisterHttpClient(IServiceCollection services)
         {
-            services.AddHttpClient(ApiConstants.HttpClientName)
+            services.AddHttpClient(DatabricksConstant.HttpClientName)
                 .ConfigureHttpClient((sp, client) =>
                 {
                     var resilienceSettings = sp.GetRequiredService<ResilienceSettings>();
@@ -65,7 +65,7 @@
                 .AddPolicyHandler((sp, _) =>
                 {
                     var resilienceSettings = sp.GetRequiredService<ResilienceSettings>();
-                    var logger = sp.GetRequiredService<ILogger<DatabricksClient>>();
+                    var logger = sp.GetRequiredService<ILogger<DatabricksApiClient>>();
 
                     var retryPolicy = HttpPolicyExtensions
                         .HandleTransientHttpError()
@@ -102,18 +102,18 @@
                                  logger.LogWarning("Databricks service is open for test requests only.");
                              });
 
-                    return Policy.WrapAsync(retryPolicy, circuitBreakerPolicy);
+                    return !resilienceSettings.DisbleRetryPolicy
+                        ? Policy.WrapAsync(retryPolicy, circuitBreakerPolicy)
+                        : Policy.NoOpAsync<HttpResponseMessage>();
                 });
         }
-        private static void RegisterInterceptorPipeline(IServiceCollection services, Action<InterceptorPipelineBuilder>? configureInterceptors)
+        private static void RegisterInterceptorPipeline(IServiceCollection services, Action<IInterceptorPipelineBuilder>? configureInterceptors)
         {
             var pipelineBuilder = new InterceptorPipelineBuilder(services);
 
-            //pipelineBuilder
-            //    .AddInterceptor<SecurityAuditInterceptor>()
-            //    .AddInterceptor<RateLimitingInterceptor>()
-            //    .AddInterceptor<QueryOptimizationInterceptor>()
-            //    .AddInterceptor<LoggingInterceptor>();
+            pipelineBuilder
+               .AddInterceptor<ValidationInterceptor>()
+               .AddInterceptor<LoggingInterceptor>();
 
             configureInterceptors?.Invoke(pipelineBuilder);
 

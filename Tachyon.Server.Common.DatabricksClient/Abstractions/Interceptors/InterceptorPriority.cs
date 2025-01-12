@@ -1,4 +1,6 @@
-﻿namespace Tachyon.Server.Common.DatabricksClient.Abstractions.Interceptors
+﻿
+
+namespace Tachyon.Server.Common.DatabricksClient.Abstractions.Interceptors
 {
     public enum InterceptorPriority
     {

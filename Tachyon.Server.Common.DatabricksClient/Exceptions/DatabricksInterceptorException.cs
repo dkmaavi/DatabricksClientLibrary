@@ -1,4 +1,6 @@
-﻿namespace Tachyon.Server.Common.DatabricksClient.Exceptions
+﻿
+
+namespace Tachyon.Server.Common.DatabricksClient.Exceptions
 {
     using System;
     public class DatabricksInterceptorException : Exception

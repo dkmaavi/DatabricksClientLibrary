@@ -1,13 +1,10 @@
-﻿namespace Tachyon.Server.Common.DatabricksClient.Implementations.Builders
-{
-    using Microsoft.Extensions.DependencyInjection;
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using Tachyon.Server.Common.DatabricksClient.Abstractions.Builders;
-    using Tachyon.Server.Common.DatabricksClient.Abstractions.Interceptors;
-    using Tachyon.Server.Common.DatabricksClient.Implementations.Interceptors;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Tachyon.Server.Common.DatabricksClient.Abstractions.Builders;
+using Tachyon.Server.Common.DatabricksClient.Abstractions.Interceptors;
+using Tachyon.Server.Common.DatabricksClient.Implementations.Interceptors;
 
+namespace Tachyon.Server.Common.DatabricksClient.Implementations.Builders
+{
     internal class InterceptorPipelineBuilder : IInterceptorPipelineBuilder
     {
         private readonly IServiceCollection services;

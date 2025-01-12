@@ -1,4 +1,6 @@
-﻿namespace Tachyon.Server.Common.DatabricksClient.Constants
+﻿
+
+namespace Tachyon.Server.Common.DatabricksClient.Constants
 {
     public class DatabricksConstant
     {

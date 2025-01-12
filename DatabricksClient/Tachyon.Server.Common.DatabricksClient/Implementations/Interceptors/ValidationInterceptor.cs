@@ -1,12 +1,12 @@
-﻿namespace Tachyon.Server.Common.DatabricksClient.Implementations.Interceptors
-{
-    using Microsoft.Extensions.Logging;
-    using Tachyon.Server.Common.DatabricksClient.Abstractions.Interceptors;
-    using Tachyon.Server.Common.DatabricksClient.Exceptions;
-    using Tachyon.Server.Common.DatabricksClient.Models.Enums;
-    using Tachyon.Server.Common.DatabricksClient.Models.Request;
-    using Tachyon.Server.Common.DatabricksClient.Models.Response;
+﻿using Microsoft.Extensions.Logging;
+using Tachyon.Server.Common.DatabricksClient.Abstractions.Interceptors;
+using Tachyon.Server.Common.DatabricksClient.Exceptions;
+using Tachyon.Server.Common.DatabricksClient.Models.Enums;
+using Tachyon.Server.Common.DatabricksClient.Models.Request;
+using Tachyon.Server.Common.DatabricksClient.Models.Response;
 
+namespace Tachyon.Server.Common.DatabricksClient.Implementations.Interceptors
+{
     internal class ValidationInterceptor : IDatabricksInterceptor
     {
         private readonly ILogger<LoggingInterceptor> logger;
@@ -35,6 +35,5 @@
 
             await Task.CompletedTask;
         }
-
     }
 }

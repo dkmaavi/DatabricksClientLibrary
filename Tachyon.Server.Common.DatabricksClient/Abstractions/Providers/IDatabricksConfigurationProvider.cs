@@ -1,4 +1,6 @@
-﻿namespace Tachyon.Server.Common.DatabricksClient.Abstractions.Providers
+﻿
+
+namespace Tachyon.Server.Common.DatabricksClient.Abstractions.Providers
 {
     using Tachyon.Server.Common.DatabricksClient.Models.Configuration;
 

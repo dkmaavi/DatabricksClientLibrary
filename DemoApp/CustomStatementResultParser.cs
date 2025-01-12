@@ -1,6 +1,4 @@
-﻿using Tachyon.Server.Common.DatabricksClient.Abstractions;
-using Tachyon.Server.Common.DatabricksClient.Abstractions.Handlers;
-using Tachyon.Server.Common.DatabricksClient.Models.Request;
+﻿using Tachyon.Server.Common.DatabricksClient.Abstractions.Handlers;
 using Tachyon.Server.Common.DatabricksClient.Models.Response;
 
 namespace DemoApp

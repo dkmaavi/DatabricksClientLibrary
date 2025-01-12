@@ -1,4 +1,6 @@
-﻿namespace Tachyon.Server.Common.DatabricksClient.Abstractions.Builders
+﻿
+
+namespace Tachyon.Server.Common.DatabricksClient.Abstractions.Builders
 {
     public interface IDatabricksHttpClientBuilder
     {

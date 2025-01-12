@@ -1,9 +1,9 @@
-﻿namespace Tachyon.Server.Common.DatabricksClient.Implementations.Handlers
-{
-    using Tachyon.Server.Common.DatabricksClient.Abstractions.Handlers;
-    using Tachyon.Server.Common.DatabricksClient.Exceptions;
-    using Tachyon.Server.Common.DatabricksClient.Models.Enums;
+﻿using Tachyon.Server.Common.DatabricksClient.Abstractions.Handlers;
+using Tachyon.Server.Common.DatabricksClient.Exceptions;
+using Tachyon.Server.Common.DatabricksClient.Models.Enums;
 
+namespace Tachyon.Server.Common.DatabricksClient.Implementations.Handlers
+{
     internal class DatabricksErrorHandler : IDatabricksErrorHandler
     {
         public Task HandleErrorAsync(Exception ex, CancellationToken cancellationToken)

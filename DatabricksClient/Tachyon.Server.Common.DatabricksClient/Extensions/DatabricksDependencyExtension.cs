@@ -1,123 +1,144 @@
-﻿namespace Tachyon.Server.Common.DatabricksClient.Extensions
-{
-    using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.Extensions.DependencyInjection.Extensions;
-    using Microsoft.Extensions.Logging;
-    using Polly;
-    using Polly.Extensions.Http;
-    using Tachyon.Server.Common.DatabricksClient.Abstractions;
-    using Tachyon.Server.Common.DatabricksClient.Abstractions.Builders;
-    using Tachyon.Server.Common.DatabricksClient.Abstractions.Handlers;
-    using Tachyon.Server.Common.DatabricksClient.Abstractions.Services;
-    using Tachyon.Server.Common.DatabricksClient.Constants;
-    using Tachyon.Server.Common.DatabricksClient.Implementations;
-    using Tachyon.Server.Common.DatabricksClient.Implementations.Builders;
-    using Tachyon.Server.Common.DatabricksClient.Implementations.Handlers;
-    using Tachyon.Server.Common.DatabricksClient.Implementations.Interceptors;
-    using Tachyon.Server.Common.DatabricksClient.Models.Configuration;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
+using Polly;
+using Polly.Extensions.Http;
+using System.Net.Http.Headers;
+using Tachyon.Server.Common.DatabricksClient.Abstractions;
+using Tachyon.Server.Common.DatabricksClient.Abstractions.Builders;
+using Tachyon.Server.Common.DatabricksClient.Abstractions.Handlers;
+using Tachyon.Server.Common.DatabricksClient.Abstractions.Services;
+using Tachyon.Server.Common.DatabricksClient.Constants;
+using Tachyon.Server.Common.DatabricksClient.Implementations;
+using Tachyon.Server.Common.DatabricksClient.Implementations.Builders;
+using Tachyon.Server.Common.DatabricksClient.Implementations.Handlers;
+using Tachyon.Server.Common.DatabricksClient.Implementations.Interceptors;
+using Tachyon.Server.Common.DatabricksClient.Implementations.Services;
+using Tachyon.Server.Common.DatabricksClient.Models.Configuration;
 
+namespace Tachyon.Server.Common.DatabricksClient.Extensions
+{
     public static class DatabricksDependencyExtension
     {
         public static IServiceCollection AddDatabricksDependency(this IServiceCollection services, Action<IInterceptorPipelineBuilder>? configureInterceptors = null)
         {
-            RegisterConfiguration(services);
-
-            RegisterServices(services);
-
-            RegisterHttpClient(services);
-
-            RegisterInterceptorPipeline(services, configureInterceptors);
-
-            return services;
+            return services
+                .AddDatabricksConfiguration()
+                .AddDatabricksServices()
+                .AddDatabricksHttpClient()
+                .AddDatabricksInterceptors(configureInterceptors);
         }
-        private static void RegisterConfiguration(IServiceCollection services)
+
+        private static IServiceCollection AddDatabricksConfiguration(this IServiceCollection services)
         {
             services.AddSingleton(sp =>
             {
-                var configurationService = sp.GetRequiredService<IDatabricksConfigurationService>();
-                return configurationService.GetHttpClientSettings();
-            }).AddSingleton(sp =>
-            {
-                var configurationService = sp.GetRequiredService<IDatabricksConfigurationService>();
-                return configurationService.GetStatementApiSettings();
-            }).AddSingleton(sp =>
-            {
-                var configurationService = sp.GetRequiredService<IDatabricksConfigurationService>();
-                return configurationService.GetResilienceSettings();
+                var configService = sp.GetRequiredService<IDatabricksConfigurationService>();
+                return configService.GetHttpClientSettings();
             });
+
+            services.AddSingleton(sp =>
+            {
+                var configService = sp.GetRequiredService<IDatabricksConfigurationService>();
+                return configService.GetStatementApiSettings();
+            });
+
+            services.AddSingleton(sp =>
+            {
+                var configService = sp.GetRequiredService<IDatabricksConfigurationService>();
+                return configService.GetResilienceSettings();
+            });
+
+            return services;
         }
-        private static void RegisterServices(IServiceCollection services)
+
+        private static IServiceCollection AddDatabricksServices(this IServiceCollection services)
         {
             services.AddScoped<IDatabricksApiClient, DatabricksApiClient>();
 
             services.TryAddScoped<IDatabricksCommunicationService, DatabricksCommunicationService>();
             services.TryAddScoped<IDatabricksResultHandler, DatabricksResultHandler>();
             services.TryAddScoped<IDatabricksErrorHandler, DatabricksErrorHandler>();
+
+            return services;
         }
-        private static void RegisterHttpClient(IServiceCollection services)
+
+        private static IServiceCollection AddDatabricksHttpClient(this IServiceCollection services)
         {
             services.AddHttpClient(DatabricksConstant.HttpClientName)
                 .ConfigureHttpClient((sp, client) =>
                 {
-                    var resilienceSettings = sp.GetRequiredService<ResilienceSettings>();
-                    client.Timeout = TimeSpan.FromSeconds(resilienceSettings.HttpTimeout);
+                    var settings = sp.GetRequiredService<HttpClientSettings>();
+
+                    client.BaseAddress = new Uri(settings.BaseUrl);
+                    client.Timeout = TimeSpan.FromSeconds(settings.HttpTimeout);
+
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", settings.BearerToken);
+                    client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 })
-                .AddPolicyHandler((sp, _) =>
-                {
-                    var resilienceSettings = sp.GetRequiredService<ResilienceSettings>();
-                    var logger = sp.GetRequiredService<ILogger<DatabricksApiClient>>();
+                .AddPolicyHandler(CreateResiliencePolicy);
 
-                    var retryPolicy = HttpPolicyExtensions
-                        .HandleTransientHttpError()
-                        .WaitAndRetryAsync(
-                            retryCount: resilienceSettings.MaxRetry,
-                            sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
-                            onRetry: (outcome, timespan, retryAttempt, context) =>
-                            {
-                                logger.LogWarning(
-                                    $"Databricks service retry attempt {retryAttempt} for {context.PolicyKey}. " +
-                                    $"with delay: {timespan}. " +
-                                    $"with reason: {outcome.Exception?.Message ?? outcome.Result?.StatusCode.ToString()}.");
-                            });
-
-
-                    var circuitBreakerPolicy = HttpPolicyExtensions
-                         .HandleTransientHttpError()
-                         .CircuitBreakerAsync(
-                             handledEventsAllowedBeforeBreaking: resilienceSettings.MaxRetry,
-                             durationOfBreak: TimeSpan.FromSeconds(resilienceSettings.CircuitBreakDuration),
-                             onBreak: (outcome, breakDelay, context) =>
-                             {
-                                 logger.LogError(
-                                     $"Databricks service broken for {context.PolicyKey}. " +
-                                     $"with delay: {breakDelay}. " +
-                                     $"with reason: {outcome.Exception?.Message ?? outcome.Result?.StatusCode.ToString()}.");
-                             },
-                             onReset: context =>
-                             {
-                                 logger.LogInformation($"Databricks service reset for {context.PolicyKey}.");
-                             },
-                             onHalfOpen: () =>
-                             {
-                                 logger.LogWarning("Databricks service is open for test requests only.");
-                             });
-
-                    return !resilienceSettings.DisbleRetryPolicy
-                        ? Policy.WrapAsync(retryPolicy, circuitBreakerPolicy)
-                        : Policy.NoOpAsync<HttpResponseMessage>();
-                });
+            return services;
         }
-        private static void RegisterInterceptorPipeline(IServiceCollection services, Action<IInterceptorPipelineBuilder>? configureInterceptors)
+
+        private static IAsyncPolicy<HttpResponseMessage> CreateResiliencePolicy(IServiceProvider sp, HttpRequestMessage _)
+        {
+            var settings = sp.GetRequiredService<ResilienceSettings>();
+            var logger = sp.GetRequiredService<ILogger<DatabricksApiClient>>();
+
+            if (settings.DisbleRetryPolicy)
+            {
+                return Policy.NoOpAsync<HttpResponseMessage>();
+            }
+
+            var retryPolicy = HttpPolicyExtensions
+                .HandleTransientHttpError()
+                .WaitAndRetryAsync(
+                    retryCount: settings.MaxRetry,
+                    sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)),
+                    onRetry: (outcome, timespan, retryAttempt, context) =>
+                    {
+                        logger.LogWarning("Databricks service retry attempt {Attempt} for {PolicyKey} with interval: { Delay}. Reason: { Reason}",
+                                retryAttempt, context.PolicyKey, timespan, outcome.Exception?.Message ?? outcome.Result?.StatusCode.ToString());
+                    });
+
+            var circuitBreakerPolicy = HttpPolicyExtensions
+                .HandleTransientHttpError()
+                .CircuitBreakerAsync(
+                    handledEventsAllowedBeforeBreaking: settings.MaxRetry,
+                    durationOfBreak: TimeSpan.FromSeconds(settings.CircuitBreakDuration),
+                    onBreak: (outcome, breakDelay, context) =>
+                    {
+                        logger.LogError("Databricks service broken for {PolicyKey} for {Delay} Seconds. Reason: {Reason}",
+                            context.PolicyKey, breakDelay, outcome.Exception?.Message ?? outcome.Result?.StatusCode.ToString());
+                    },
+                    onReset: context =>
+                    {
+                        logger.LogInformation(
+                            "Databricks service reset for {PolicyKey}",
+                            context.PolicyKey);
+                    },
+                    onHalfOpen: () =>
+                    {
+                        logger.LogWarning(
+                            "Databricks service is open for test requests only");
+                    });
+
+            return Policy.WrapAsync(retryPolicy, circuitBreakerPolicy);
+        }
+
+        private static IServiceCollection AddDatabricksInterceptors(this IServiceCollection services, Action<IInterceptorPipelineBuilder>? configureInterceptors)
         {
             var pipelineBuilder = new InterceptorPipelineBuilder(services);
 
             pipelineBuilder
-               .AddInterceptor<ValidationInterceptor>()
-               .AddInterceptor<LoggingInterceptor>();
+                .AddInterceptor<ValidationInterceptor>()
+                .AddInterceptor<LoggingInterceptor>();
 
             configureInterceptors?.Invoke(pipelineBuilder);
-
             pipelineBuilder.Build();
+
+            return services;
         }
     }
 }

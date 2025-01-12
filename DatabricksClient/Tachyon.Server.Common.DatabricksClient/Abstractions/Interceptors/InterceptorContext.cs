@@ -6,6 +6,6 @@ namespace Tachyon.Server.Common.DatabricksClient.Abstractions.Interceptors
     {
         public Guid Id { get; } = Guid.NewGuid();
         public Stopwatch Timer { get; } = new Stopwatch();
-        public Dictionary<string, object> DataItems { get; } = [];   
+        public Dictionary<string, object> DataItems { get; } = [];
     }
 }

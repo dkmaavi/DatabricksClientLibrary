@@ -1,11 +1,11 @@
-﻿namespace Tachyon.Server.Common.DatabricksClient.Exceptions
-{
-    using System;
-    using Tachyon.Server.Common.DatabricksClient.Models.Enums;
+﻿using Tachyon.Server.Common.DatabricksClient.Models.Enums;
 
+namespace Tachyon.Server.Common.DatabricksClient.Exceptions
+{
     public class DatabricksInterceptorException : Exception
     {
         public ErrorCode ErrorCode { get; }
+
         public DatabricksInterceptorException(string message)
             : base(message)
         {
@@ -15,7 +15,7 @@
             : base(message, inner)
         {
         }
-       
+
         public DatabricksInterceptorException(ErrorCode errorCode, string message)
             : base(message)
         {

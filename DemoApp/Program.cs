@@ -1,5 +1,4 @@
-﻿using DatabricksApp;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Tachyon.Server.Common.DatabricksClient.Abstractions.Services;
@@ -7,9 +6,9 @@ using Tachyon.Server.Common.DatabricksClient.Extensions;
 
 namespace DemoApp
 {
-    class Program
+    internal class Program
     {
-        static async Task Main(string[] args)
+        private static async Task Main(string[] args)
         {
             var host = CreateHostBuilder(args).Build();
             var demoApp = host.Services.GetRequiredService<DatabricksApp>();
@@ -31,12 +30,11 @@ namespace DemoApp
                     services.AddDatabricksDependency(
                         configureInterceptors: pipeline =>
                         {
-                            //pipeline.RemoveInterceptors();
-                            //pipeline.AddInterceptor<MetricInterceptor>();
-                        });    
-                    
-                    /***********************************************************************************/
+                           // pipeline.RemoveInterceptors();
+                            pipeline.AddInterceptor<MetricInterceptor>();
+                        });
 
+                    /***********************************************************************************/
                 })
                 .ConfigureLogging((context, logging) =>
                 {
@@ -46,5 +44,3 @@ namespace DemoApp
                 });
     }
 }
-
-

@@ -4,6 +4,7 @@
     {
         // Generic error codes
         TIMEOUT,
+
         PARSE_ERROR,
         INTERCEPTOR,
         NETWORK_ERROR,
@@ -11,6 +12,7 @@
 
         // Databricks error codes
         UNKNOWN,
+
         INTERNAL_ERROR,
         TEMPORARILY_UNAVAILABLE,
         IO_ERROR,

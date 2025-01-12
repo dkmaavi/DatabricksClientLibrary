@@ -1,6 +1,7 @@
-﻿namespace Tachyon.Server.Common.DatabricksClient.Models.Request
+﻿using Newtonsoft.Json;
+
+namespace Tachyon.Server.Common.DatabricksClient.Models.Request
 {
-    using Newtonsoft.Json;
     public class StatementQueryParameter
     {
         [JsonProperty("name")]

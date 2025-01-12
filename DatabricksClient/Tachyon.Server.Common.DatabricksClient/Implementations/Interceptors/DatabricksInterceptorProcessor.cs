@@ -1,81 +1,88 @@
-﻿namespace Tachyon.Server.Common.DatabricksClient.Implementations.Interceptors
-{
-    using Microsoft.Extensions.Logging;
-    using Tachyon.Server.Common.DatabricksClient.Abstractions.Interceptors;
-    using Tachyon.Server.Common.DatabricksClient.Models.Request;
-    using Tachyon.Server.Common.DatabricksClient.Models.Response;
+﻿using Microsoft.Extensions.Logging;
+using System.Collections.Immutable;
+using Tachyon.Server.Common.DatabricksClient.Abstractions.Interceptors;
+using Tachyon.Server.Common.DatabricksClient.Models.Request;
+using Tachyon.Server.Common.DatabricksClient.Models.Response;
 
-    internal class DatabricksInterceptorProcessor
+namespace Tachyon.Server.Common.DatabricksClient.Implementations.Interceptors
+{
+    internal sealed class DatabricksInterceptorProcessor
     {
-        private readonly IEnumerable<IDatabricksInterceptor> interceptors;
+        private readonly ImmutableList<IDatabricksInterceptor> interceptors;
+        private readonly InterceptorContext globalContext;
         private readonly ILogger<DatabricksInterceptorProcessor> logger;
-        private readonly InterceptorContext globalContext = new();
+
         public DatabricksInterceptorProcessor(IEnumerable<IDatabricksInterceptor> interceptors, ILogger<DatabricksInterceptorProcessor> logger)
         {
-            this.interceptors = interceptors.ToList();
+            this.interceptors = interceptors.ToImmutableList();
+            globalContext = new InterceptorContext();
             this.logger = logger;
         }
 
-        public InterceptorContext GlobalContext { get { return globalContext; } }
-
         public async Task BeforeRequestAsync(StatementQuery statementQuery)
         {
+            logger.LogInformation("Starting interceptor execution. Request ID: {RequestId}",
+                globalContext.Id);
+
             globalContext.Timer.Start();
-
-            logger.LogDebug("Executing interceptors with global id - {RequestId}", globalContext.Id);
-
-            foreach (var interceptor in interceptors)
-            {
-                try
-                {
-                    logger.LogDebug("Executing before request interceptor {InterceptorType} with priority {Priority}", interceptor.GetType().Name, interceptor.Priority);
-
-                    await interceptor.BeforeRequestAsync(statementQuery);
-                }
-                catch (Exception ex)
-                {
-                    if (interceptor.Priority == InterceptorPriority.Critical)
-                    {
-                        logger.LogError("Failed to execute before interceptors for global id - {RequestId}", globalContext.Id);
-                        throw;
-                    }
-                    else
-                    {
-                        logger.LogError(ex, "Error in interceptor {InterceptorType} during BeforeRequestAsync", interceptor.GetType().Name);
-                    }
-                }
-            }
+            await ExecuteInterceptorsAsync(interceptors, i => i.BeforeRequestAsync(statementQuery), nameof(this.BeforeRequestAsync));
         }
 
         public async Task AfterRequestAsync(StatementResult statementResult)
         {
-            foreach (var interceptor in interceptors.Reverse())
+            try
+            {
+                await ExecuteInterceptorsAsync(interceptors.Reverse(), i => i.AfterRequestAsync(statementResult), nameof(this.AfterRequestAsync));
+            }
+            finally
+            {
+                await LogExecutionDetailAsync();
+            }
+        }
+
+        private async Task ExecuteInterceptorsAsync(IEnumerable<IDatabricksInterceptor> interceptors, Func<IDatabricksInterceptor, Task> executeInterceptor, string operationName)
+        {
+            foreach (var interceptor in interceptors)
             {
                 try
                 {
-                    logger.LogDebug("Executing after request interceptor {InterceptorType} with priority {Priority}", interceptor.GetType().Name, interceptor.Priority);
+                    logger.LogDebug("Executing {OperationName} for interceptor {InterceptorType} (Priority: {Priority})",
+                        operationName, interceptor.GetType().Name, interceptor.Priority);
 
-                    await interceptor.AfterRequestAsync(statementResult);
+                    await executeInterceptor(interceptor);
                 }
                 catch (Exception ex)
                 {
-                    if (interceptor.Priority == InterceptorPriority.Critical)
-                    {
-                        logger.LogError("Failed to execute after interceptors for global id - {RequestId}", globalContext.Id);
-                        throw;
-                    }
-                    else
-                    {
-                        logger.LogError(ex, "Error in interceptor {InterceptorType} during AfterRequestAsync", interceptor.GetType().Name);
-                    }
+                    await HandleInterceptorExceptionAsync(interceptor, operationName, ex);
                 }
             }
+        }
 
+        private async Task HandleInterceptorExceptionAsync(IDatabricksInterceptor interceptor, string operation, Exception exception)
+        {
+            if (interceptor.Priority == InterceptorPriority.Critical)
+            {
+                logger.LogError(exception, "Critical interceptor {InterceptorType} failed during {Operation}. Request ID: {RequestId}",
+                    interceptor.GetType().Name, operation, globalContext.Id);
+
+                throw exception;
+            }
+
+            logger.LogError(exception, "Non-critical interceptor {InterceptorType} failed during {Operation}. Continuing execution. Request ID: {RequestId}",
+                interceptor.GetType().Name, operation, globalContext.Id);
+
+            await Task.CompletedTask;
+        }
+
+        private async Task LogExecutionDetailAsync()
+        {
             globalContext.Timer?.Stop();
             var duration = globalContext.Timer?.Elapsed.TotalMilliseconds ?? 0;
 
-            logger.LogDebug("Successfully executed interceptors for global request id - {queryId}, with a total duration of : {duration:F2}ms", globalContext.Id, duration);
+            logger.LogDebug("Completed interceptor execution. Request ID: {RequestId}, Duration: {Duration:F2}ms",
+                globalContext.Id, duration);
 
+            await Task.CompletedTask;
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Logging;
 using Tachyon.Server.Common.DatabricksClient.Abstractions;
 using Tachyon.Server.Common.DatabricksClient.Models.Request;
+
 namespace DemoApp
 {
     public class DatabricksApp
@@ -22,7 +23,7 @@ namespace DemoApp
 
                 await ExecuteGetQuery();
 
-               // await ExecuteGetQuery();
+                // await ExecuteGetQuery();
 
                 //await ExecuteQuery();
 
@@ -38,7 +39,7 @@ namespace DemoApp
         {
             var query = new StatementQuery
             {
-                Statement =  @"SELECT * FROM software_main;",
+                Statement = @"SELECT * FROM software_main limit 10;",
                 Parameters = new List<StatementQueryParameter>
             {
                 new StatementQueryParameter
@@ -48,7 +49,7 @@ namespace DemoApp
                     Type  ="STRING"
                 }
             }
-            };//
+            };
 
             var softwares = await client.GetResultAsync<Software>(query);
 

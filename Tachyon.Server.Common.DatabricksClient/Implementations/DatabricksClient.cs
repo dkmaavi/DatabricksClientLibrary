@@ -1,4 +1,6 @@
-﻿namespace Tachyon.Server.Common.DatabricksClient.Implementations
+﻿
+
+namespace Tachyon.Server.Common.DatabricksClient.Implementations
 {
     using Microsoft.Extensions.Logging;
     using Tachyon.Server.Common.DatabricksClient.Abstractions.Builders;

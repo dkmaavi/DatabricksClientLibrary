@@ -1,18 +1,17 @@
-﻿namespace Tachyon.Server.Common.DatabricksClient.Implementations
-{
-    using System;
-    using Microsoft.Extensions.Logging;
-    using Tachyon.Server.Common.DatabricksClient.Abstractions;
-    using Tachyon.Server.Common.DatabricksClient.Exceptions;
-    using Tachyon.Server.Common.DatabricksClient.Implementations.Interceptors;
-    using Tachyon.Server.Common.DatabricksClient.Models.Configuration;
-    using Tachyon.Server.Common.DatabricksClient.Models.Enums;
-    using Tachyon.Server.Common.DatabricksClient.Models.Request;
-    using Tachyon.Server.Common.DatabricksClient.Models.Response;
-    using Tachyon.Server.Common.DatabricksClient.Utilities;
-    using Tachyon.Server.Common.DatabricksClient.Abstractions.Handlers;
-    using Tachyon.Server.Common.DatabricksClient.Abstractions.Services;
+using Microsoft.Extensions.Logging;
+using Tachyon.Server.Common.DatabricksClient.Abstractions;
+using Tachyon.Server.Common.DatabricksClient.Abstractions.Handlers;
+using Tachyon.Server.Common.DatabricksClient.Abstractions.Services;
+using Tachyon.Server.Common.DatabricksClient.Exceptions;
+using Tachyon.Server.Common.DatabricksClient.Implementations.Interceptors;
+using Tachyon.Server.Common.DatabricksClient.Models.Configuration;
+using Tachyon.Server.Common.DatabricksClient.Models.Enums;
+using Tachyon.Server.Common.DatabricksClient.Models.Request;
+using Tachyon.Server.Common.DatabricksClient.Models.Response;
+using Tachyon.Server.Common.DatabricksClient.Utilities;
 
+namespace Tachyon.Server.Common.DatabricksClient.Implementations
+{
     internal class DatabricksApiClient : IDatabricksApiClient
     {
         private readonly IDatabricksCommunicationService databricksCommunicationService;
@@ -21,6 +20,7 @@
         private readonly DatabricksInterceptorProcessor interceptorProcessor;
         private readonly ResilienceSettings resilienceSettings;
         private readonly ILogger<DatabricksApiClient> logger;
+
         public DatabricksApiClient(IDatabricksCommunicationService databricksCommunicationService, IDatabricksResultHandler databricksResultHandler,
             IDatabricksErrorHandler databricksErrorHandler, DatabricksInterceptorProcessor interceptorProcessor, ResilienceSettings resilienceSettings, ILogger<DatabricksApiClient> logger)
         {

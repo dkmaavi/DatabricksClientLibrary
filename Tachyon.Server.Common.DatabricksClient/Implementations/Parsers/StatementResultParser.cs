@@ -1,4 +1,6 @@
-﻿namespace Tachyon.Server.Common.DatabricksClient.Implementations.Parsers
+﻿
+
+namespace Tachyon.Server.Common.DatabricksClient.Implementations.Parsers
 {
     using Newtonsoft.Json.Linq;
     using System.Threading;

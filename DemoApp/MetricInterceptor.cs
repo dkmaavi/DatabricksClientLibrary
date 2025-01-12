@@ -1,17 +1,18 @@
-﻿namespace DemoApp
-{
-    using Microsoft.Extensions.Logging;
-    using Tachyon.Server.Common.DatabricksClient.Abstractions.Interceptors;
-    using Tachyon.Server.Common.DatabricksClient.Models.Enums;
-    using Tachyon.Server.Common.DatabricksClient.Models.Request;
-    using Tachyon.Server.Common.DatabricksClient.Models.Response;
+﻿using Microsoft.Extensions.Logging;
+using Tachyon.Server.Common.DatabricksClient.Abstractions.Interceptors;
+using Tachyon.Server.Common.DatabricksClient.Models.Enums;
+using Tachyon.Server.Common.DatabricksClient.Models.Request;
+using Tachyon.Server.Common.DatabricksClient.Models.Response;
 
+namespace DemoApp
+{
     public class MetricInterceptor : IDatabricksInterceptor
     {
         private readonly Counters counters;
         private readonly ILogger<MetricInterceptor> logger;
 
         public InterceptorPriority Priority => InterceptorPriority.Normal;
+
         public MetricInterceptor(Counters counters, ILogger<MetricInterceptor> logger)
         {
             this.counters = counters;
@@ -30,8 +31,8 @@
             {
                 counters.ApiFailedRequestsTotal++;
             }
-            else 
-            { 
+            else
+            {
                 counters.ApiSuccessfulRequestsTotal++;
             }
 
@@ -41,6 +42,5 @@
 
             await Task.CompletedTask;
         }
-
     }
 }

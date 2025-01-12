@@ -1,4 +1,6 @@
-﻿namespace Tachyon.Server.Common.DatabricksClient.Implementations.Interceptors
+﻿
+
+namespace Tachyon.Server.Common.DatabricksClient.Implementations.Interceptors
 {
     using Microsoft.Extensions.Logging;
     using System.Diagnostics;

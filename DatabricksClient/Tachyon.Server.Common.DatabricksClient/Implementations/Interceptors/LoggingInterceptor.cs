@@ -1,18 +1,17 @@
-﻿namespace Tachyon.Server.Common.DatabricksClient.Implementations.Interceptors
-{
-    using System.Text;
-    using Microsoft.Extensions.Logging;
-    using Newtonsoft.Json;
-    using Tachyon.Server.Common.DatabricksClient.Abstractions.Interceptors;
-    using Tachyon.Server.Common.DatabricksClient.Models.Enums;
-    using Tachyon.Server.Common.DatabricksClient.Models.Request;
-    using Tachyon.Server.Common.DatabricksClient.Models.Response;
+﻿using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Tachyon.Server.Common.DatabricksClient.Abstractions.Interceptors;
+using Tachyon.Server.Common.DatabricksClient.Models.Request;
+using Tachyon.Server.Common.DatabricksClient.Models.Response;
 
+namespace Tachyon.Server.Common.DatabricksClient.Implementations.Interceptors
+{
     internal class LoggingInterceptor : IDatabricksInterceptor
     {
         private readonly ILogger<LoggingInterceptor> logger;
         private readonly InterceptorContext localContext = new();
         public InterceptorPriority Priority => InterceptorPriority.Normal;
+
         public LoggingInterceptor(ILogger<LoggingInterceptor> logger)
         {
             this.logger = logger;
@@ -22,12 +21,8 @@
         {
             localContext.Timer.Start();
 
-            var logMessage = new StringBuilder();
-            logMessage.AppendLine($"Query Id: {localContext.Id}");
-            logMessage.AppendLine($"Query: {statementQuery.Statement}");
-            logMessage.AppendLine($"Query Parameters: {JsonConvert.SerializeObject(statementQuery.Parameters)}");
-
-            logger.LogDebug(logMessage.ToString());
+            logger.LogDebug("Executing query With Id {queryId}, Statement: {Statement} and Parameters: {Parameters}",
+                    localContext.Id, statementQuery.Statement, JsonConvert.SerializeObject(statementQuery.Parameters));
 
             await Task.CompletedTask;
         }
@@ -37,21 +32,18 @@
             localContext.Timer?.Stop();
             var duration = localContext.Timer?.Elapsed.TotalMilliseconds ?? 0;
 
-            var logMessage = new StringBuilder();
-            logMessage.AppendLine($"Response Id: {localContext.Id}");
-            logMessage.AppendLine($"Duration: {duration:F2}ms");
-            logMessage.AppendLine($"Status: {statementResult.Status.State}");
+            var isError = statementResult.Status.Error != null;
+            var logLevel = isError ? LogLevel.Error : LogLevel.Debug;
 
-            if (statementResult.Status.State == State.Failed)
-            {
-                logMessage.AppendLine($"Error Code: {statementResult.Status.Error?.ErrorCode}");
-                logMessage.AppendLine($"Error Message: {statementResult.Status.Error?.Message}");
-            }
+            var errorDetails = isError
+                            ? $"Error Code: {statementResult.Status.Error!.ErrorCode} and Error Message: {statementResult.Status.Error.Message}"
+                            : string.Empty;
 
-            logger.LogDebug(logMessage.ToString());
+            var logMessage = $"Executed query with ID {localContext.Id}. Total Duration: {duration:F2} ms, Status: {statementResult.Status.State} {errorDetails}";
+
+            logger.Log(logLevel, logMessage);
 
             await Task.CompletedTask;
         }
-
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace Tachyon.Server.Common.DatabricksClient.Models.Request
+﻿
+
+namespace Tachyon.Server.Common.DatabricksClient.Models.Request
 {
     public class StatementQuery
     {

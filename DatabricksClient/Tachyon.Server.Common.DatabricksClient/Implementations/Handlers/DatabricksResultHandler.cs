@@ -1,11 +1,11 @@
-﻿namespace Tachyon.Server.Common.DatabricksClient.Implementations.Handlers
+﻿using Newtonsoft.Json.Linq;
+using Tachyon.Server.Common.DatabricksClient.Abstractions.Handlers;
+using Tachyon.Server.Common.DatabricksClient.Exceptions;
+using Tachyon.Server.Common.DatabricksClient.Models.Enums;
+using Tachyon.Server.Common.DatabricksClient.Models.Response;
+
+namespace Tachyon.Server.Common.DatabricksClient.Implementations.Handlers
 {
-    using Newtonsoft.Json.Linq;
-    using System.Threading;
-    using Tachyon.Server.Common.DatabricksClient.Abstractions.Handlers;
-    using Tachyon.Server.Common.DatabricksClient.Exceptions;
-    using Tachyon.Server.Common.DatabricksClient.Models.Enums;
-    using Tachyon.Server.Common.DatabricksClient.Models.Response;
     internal class DatabricksResultHandler : IDatabricksResultHandler
     {
         public async Task<List<T>> HandleResultAsync<T>(StatementResult result, CancellationToken cancellationToken)

@@ -4,5 +4,6 @@
     {
         public string BaseUrl { get; set; }
         public string BearerToken { get; set; }
+        public int HttpTimeout { get; set; } = 300;
     }
 }

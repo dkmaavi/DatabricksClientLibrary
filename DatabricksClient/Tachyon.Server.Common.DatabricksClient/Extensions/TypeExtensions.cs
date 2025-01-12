@@ -1,6 +1,7 @@
-﻿namespace Tachyon.Server.Common.DatabricksClient.Extensions
+﻿using Tachyon.Server.Common.DatabricksClient.Models.Enums;
+
+namespace Tachyon.Server.Common.DatabricksClient.Extensions
 {
-    using Tachyon.Server.Common.DatabricksClient.Models.Enums;
     internal static class TypeExtensions
     {
         public static string ToDbxType(this Type type)

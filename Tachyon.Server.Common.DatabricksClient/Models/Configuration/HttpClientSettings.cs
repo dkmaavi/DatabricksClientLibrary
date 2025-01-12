@@ -1,4 +1,6 @@
-﻿namespace Tachyon.Server.Common.DatabricksClient.Models.Configuration
+﻿
+
+namespace Tachyon.Server.Common.DatabricksClient.Models.Configuration
 {
     public class HttpClientSettings
     {

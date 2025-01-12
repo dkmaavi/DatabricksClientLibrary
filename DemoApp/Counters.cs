@@ -1,6 +1,4 @@
-﻿using System.Diagnostics.Metrics;
-
-namespace DemoApp
+﻿namespace DemoApp
 {
     public class Counters
     {

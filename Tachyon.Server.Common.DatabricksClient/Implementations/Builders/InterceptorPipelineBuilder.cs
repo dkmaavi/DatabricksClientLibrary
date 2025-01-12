@@ -1,4 +1,6 @@
-﻿namespace Tachyon.Server.Common.DatabricksClient.Implementations.Builders
+﻿
+
+namespace Tachyon.Server.Common.DatabricksClient.Implementations.Builders
 {
     using Microsoft.Extensions.DependencyInjection;
     using System;

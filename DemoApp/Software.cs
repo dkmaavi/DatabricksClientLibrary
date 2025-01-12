@@ -5,6 +5,4 @@
     public string? ProductVersion { get; set; }
     public string? Product { get; set; }
     public string? Publisher { get; set; }
-
-  
 }

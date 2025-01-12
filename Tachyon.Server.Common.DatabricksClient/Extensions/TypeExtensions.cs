@@ -1,4 +1,6 @@
-﻿namespace Tachyon.Server.Common.DatabricksClient.Extensions
+﻿
+
+namespace Tachyon.Server.Common.DatabricksClient.Extensions
 {
     using Tachyon.Server.Common.DatabricksClient.Models.Enums;
     internal static class TypeExtensions

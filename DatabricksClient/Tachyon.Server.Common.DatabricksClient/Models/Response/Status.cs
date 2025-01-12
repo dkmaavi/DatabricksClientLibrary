@@ -14,11 +14,7 @@ namespace Tachyon.Server.Common.DatabricksClient.Models.Response
     {
         [JsonProperty("Error_code")]
         public ErrorCode ErrorCode { get; set; }
+
         public string Message { get; set; }
     }
-
-
-
-
-
 }

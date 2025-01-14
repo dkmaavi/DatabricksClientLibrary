@@ -1,11 +1,13 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Tachyon.Server.Common.DatabricksClient.Abstractions.Builders;
+using Tachyon.Server.Common.DatabricksClient.Abstractions.Handlers;
 using Tachyon.Server.Common.DatabricksClient.Abstractions.Interceptors;
-using Tachyon.Server.Common.DatabricksClient.Implementations.Interceptors;
+using Tachyon.Server.Common.DatabricksClient.Implementations.Handlers;
 
 namespace Tachyon.Server.Common.DatabricksClient.Implementations.Builders
 {
-    internal class InterceptorPipelineBuilder : IInterceptorPipelineBuilder
+    internal class InterceptorPipelineBuilder : IDatabricksPipelineBuilder
     {
         private readonly IServiceCollection services;
         private readonly List<Type> interceptorTypes = new();
@@ -15,14 +17,14 @@ namespace Tachyon.Server.Common.DatabricksClient.Implementations.Builders
             this.services = services;
         }
 
-        public IInterceptorPipelineBuilder AddInterceptor<T>() where T : class, IDatabricksInterceptor
+        public IDatabricksPipelineBuilder AddInterceptor<T>() where T : class, IDatabricksInterceptor
         {
-            services.AddScoped<T>();
+            services.AddTransient<T>();
             interceptorTypes.Add(typeof(T));
             return this;
         }
 
-        public IInterceptorPipelineBuilder RemoveInterceptors()
+        public IDatabricksPipelineBuilder RemoveInterceptors()
         {
             interceptorTypes.Clear();
             return this;
@@ -30,13 +32,12 @@ namespace Tachyon.Server.Common.DatabricksClient.Implementations.Builders
 
         public void Build()
         {
-            services.AddScoped<IEnumerable<IDatabricksInterceptor>>(sp =>
-            {
-                return interceptorTypes.Select(t => sp.GetRequiredService(t))
-                                      .Cast<IDatabricksInterceptor>().ToList();
-            });
-
-            services.AddScoped<DatabricksInterceptorProcessor>();
+            services.AddTransient<IDatabricksQueryHandler, DatabricksQueryHandler>();
+            //services.AddSingleton(sp =>
+            //{
+            //    var databricksPipelineBuilder = new DatabricksPipelineBuilder(sp, sp.GetRequiredService<ILogger<DatabricksPipelineBuilder>>());
+            //    return databricksPipelineBuilder.Build();
+            //});
         }
     }
 }

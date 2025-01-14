@@ -23,6 +23,8 @@ namespace DemoApp
 
                 await ExecuteGetQuery();
 
+                //await ExecuteGetQuery();
+
                 // await ExecuteGetQuery();
 
                 //await ExecuteQuery();

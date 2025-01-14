@@ -19,12 +19,12 @@ namespace DemoApp
             this.logger = logger;
         }
 
-        public async Task BeforeRequestAsync(StatementQuery statementQuery)
+        public async Task PreProcessAsync(StatementQuery query)
         {
             await Task.CompletedTask;
         }
 
-        public async Task AfterRequestAsync(StatementResult statementResult)
+        public async Task PostProcessAsync(StatementResult statementResult)
         {
             counters.ApiRequestsTotal++;
             if (statementResult.Status.State == State.Failed)
@@ -42,5 +42,6 @@ namespace DemoApp
 
             await Task.CompletedTask;
         }
+     
     }
 }

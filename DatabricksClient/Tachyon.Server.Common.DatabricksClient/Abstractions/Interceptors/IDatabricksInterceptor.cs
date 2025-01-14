@@ -6,9 +6,8 @@ namespace Tachyon.Server.Common.DatabricksClient.Abstractions.Interceptors
     public interface IDatabricksInterceptor
     {
         InterceptorPriority Priority { get; }
+        Task PreProcessAsync(StatementQuery query);
+        Task PostProcessAsync(StatementResult result);
 
-        Task BeforeRequestAsync(StatementQuery statementQuery);
-
-        Task AfterRequestAsync(StatementResult statementResult);
     }
 }

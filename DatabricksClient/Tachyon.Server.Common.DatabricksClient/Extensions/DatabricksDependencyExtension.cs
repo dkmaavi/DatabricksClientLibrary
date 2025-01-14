@@ -20,7 +20,7 @@ namespace Tachyon.Server.Common.DatabricksClient.Extensions
 {
     public static class DatabricksDependencyExtension
     {
-        public static IServiceCollection AddDatabricksDependency(this IServiceCollection services, Action<IInterceptorPipelineBuilder>? configureInterceptors = null)
+        public static IServiceCollection AddDatabricksDependency(this IServiceCollection services, Action<IDatabricksPipelineBuilder>? configureInterceptors = null)
         {
             return services
                 .AddDatabricksConfiguration()
@@ -127,13 +127,13 @@ namespace Tachyon.Server.Common.DatabricksClient.Extensions
             return Policy.WrapAsync(retryPolicy, circuitBreakerPolicy);
         }
 
-        private static IServiceCollection AddDatabricksInterceptors(this IServiceCollection services, Action<IInterceptorPipelineBuilder>? configureInterceptors)
+        private static IServiceCollection AddDatabricksInterceptors(this IServiceCollection services, Action<IDatabricksPipelineBuilder>? configureInterceptors)
         {
-            var pipelineBuilder = new InterceptorPipelineBuilder(services);
+            var pipelineBuilder = new DatabricksPipelineBuilder(services);
 
-            pipelineBuilder
-                .AddInterceptor<ValidationInterceptor>()
-                .AddInterceptor<LoggingInterceptor>();
+            pipelineBuilder.AddHandler<DatabricksQueryHandler>();
+            pipelineBuilder.AddInterceptor<ValidationInterceptor>();
+            pipelineBuilder.AddInterceptor<LoggingInterceptor>();
 
             configureInterceptors?.Invoke(pipelineBuilder);
             pipelineBuilder.Build();

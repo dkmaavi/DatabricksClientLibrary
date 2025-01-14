@@ -17,7 +17,7 @@ namespace Tachyon.Server.Common.DatabricksClient.Implementations.Interceptors
             this.logger = logger;
         }
 
-        public async Task BeforeRequestAsync(StatementQuery statementQuery)
+        public async Task PreProcessAsync(StatementQuery statementQuery)
         {
             localContext.Timer.Start();
 
@@ -27,7 +27,7 @@ namespace Tachyon.Server.Common.DatabricksClient.Implementations.Interceptors
             await Task.CompletedTask;
         }
 
-        public async Task AfterRequestAsync(StatementResult statementResult)
+        public async Task PostProcessAsync(StatementResult statementResult)
         {
             localContext.Timer?.Stop();
             var duration = localContext.Timer?.Elapsed.TotalMilliseconds ?? 0;

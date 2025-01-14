@@ -14,13 +14,15 @@ namespace Tachyon.Server.Common.DatabricksClient.Implementations.Services
         private readonly HttpClient httpClient;
         private readonly StatementApiSettings apiSettings;
         private readonly ILogger<DatabricksCommunicationService> logger;
+        private readonly ResilienceSettings resilienceSettings;
 
-        public DatabricksCommunicationService(IHttpClientFactory httpClientFactory, StatementApiSettings apiSettings, ILogger<DatabricksCommunicationService> logger)
+        public DatabricksCommunicationService(IHttpClientFactory httpClientFactory, StatementApiSettings apiSettings, ILogger<DatabricksCommunicationService> logger, ResilienceSettings resilienceSettings)
         {
             this.apiSettings = apiSettings;
             this.logger = logger;
 
             httpClient = httpClientFactory.CreateClient(DatabricksConstant.HttpClientName);
+            this.resilienceSettings = resilienceSettings;
         }
 
         public async Task<StatementResult> SendStatementQueryAsync(StatementQuery query, CancellationToken cancellationToken)

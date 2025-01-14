@@ -18,7 +18,7 @@ namespace Tachyon.Server.Common.DatabricksClient.Implementations.Interceptors
             this.logger = logger;
         }
 
-        public async Task BeforeRequestAsync(StatementQuery statementQuery)
+        public async Task PreProcessAsync(StatementQuery statementQuery)
         {
             if (string.IsNullOrEmpty(statementQuery.Statement))
                 throw new DatabricksInterceptorException("Statement query is null", new ArgumentNullException(nameof(statementQuery.Statement)));
@@ -26,7 +26,7 @@ namespace Tachyon.Server.Common.DatabricksClient.Implementations.Interceptors
             await Task.CompletedTask;
         }
 
-        public async Task AfterRequestAsync(StatementResult statementResult)
+        public async Task PostProcessAsync(StatementResult statementResult)
         {
             if (statementResult.Status.State == State.Failed)
             {

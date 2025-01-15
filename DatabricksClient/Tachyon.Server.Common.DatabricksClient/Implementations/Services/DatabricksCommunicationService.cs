@@ -35,6 +35,11 @@ namespace Tachyon.Server.Common.DatabricksClient.Implementations.Services
             return await SendRequestAsync<StatementResult>(HttpMethod.Get, $"{DatabricksConstant.ApiEndpoint}/{statementId}", null, cancellationToken);
         }
 
+        public async Task CancelStatementQueryAsync(string statementId, CancellationToken cancellationToken)
+        {
+            await SendRequestAsync<object>(HttpMethod.Post, $"{DatabricksConstant.ApiEndpoint}/{statementId}/cancel", null, cancellationToken);
+        }
+
         private async Task<T> SendRequestAsync<T>(HttpMethod method, string uri, StatementQuery? query, CancellationToken cancellationToken)
         {
             using var request = BuildRequest(method, uri, query);

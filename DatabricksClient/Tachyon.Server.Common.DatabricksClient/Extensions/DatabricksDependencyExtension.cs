@@ -31,19 +31,19 @@ namespace Tachyon.Server.Common.DatabricksClient.Extensions
 
         private static IServiceCollection AddDatabricksConfiguration(this IServiceCollection services)
         {
-            services.AddSingleton(sp =>
+            services.AddScoped(sp =>
             {
                 var configService = sp.GetRequiredService<IDatabricksConfigurationService>();
                 return configService.GetHttpClientSettings();
             });
 
-            services.AddSingleton(sp =>
+            services.AddScoped(sp =>
             {
                 var configService = sp.GetRequiredService<IDatabricksConfigurationService>();
                 return configService.GetStatementApiSettings();
             });
 
-            services.AddSingleton(sp =>
+            services.AddScoped(sp =>
             {
                 var configService = sp.GetRequiredService<IDatabricksConfigurationService>();
                 return configService.GetResilienceSettings();
@@ -54,11 +54,11 @@ namespace Tachyon.Server.Common.DatabricksClient.Extensions
 
         private static IServiceCollection AddDatabricksServices(this IServiceCollection services)
         {
-            services.AddScoped<IDatabricksApiClient, DatabricksApiClient>();
+            services.AddTransient<IDatabricksApiClient, DatabricksApiClient>();
 
-            services.TryAddScoped<IDatabricksCommunicationService, DatabricksCommunicationService>();
-            services.TryAddScoped<IDatabricksResultHandler, DatabricksResultHandler>();
-            services.TryAddScoped<IDatabricksErrorHandler, DatabricksErrorHandler>();
+            services.TryAddTransient<IDatabricksCommunicationService, DatabricksCommunicationService>();
+            services.TryAddTransient<IDatabricksResultHandler, DatabricksResultHandler>();
+            services.TryAddTransient<IDatabricksErrorHandler, DatabricksErrorHandler>();
 
             return services;
         }
@@ -77,6 +77,20 @@ namespace Tachyon.Server.Common.DatabricksClient.Extensions
                     client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 })
                 .AddPolicyHandler(CreateResiliencePolicy);
+
+            return services;
+        }
+
+        private static IServiceCollection AddDatabricksInterceptors(this IServiceCollection services, Action<IDatabricksPipelineBuilder>? configureInterceptors)
+        {
+            var pipelineBuilder = new DatabricksPipelineBuilder(services);
+
+            pipelineBuilder.AddHandler<DatabricksQueryHandler>();
+            pipelineBuilder.AddInterceptor<LoggingInterceptor>();
+            pipelineBuilder.AddInterceptor<ValidationInterceptor>();          
+
+            configureInterceptors?.Invoke(pipelineBuilder);
+            pipelineBuilder.Build();
 
             return services;
         }
@@ -127,18 +141,6 @@ namespace Tachyon.Server.Common.DatabricksClient.Extensions
             return Policy.WrapAsync(retryPolicy, circuitBreakerPolicy);
         }
 
-        private static IServiceCollection AddDatabricksInterceptors(this IServiceCollection services, Action<IDatabricksPipelineBuilder>? configureInterceptors)
-        {
-            var pipelineBuilder = new DatabricksPipelineBuilder(services);
-
-            pipelineBuilder.AddHandler<DatabricksQueryHandler>();
-            pipelineBuilder.AddInterceptor<ValidationInterceptor>();
-            pipelineBuilder.AddInterceptor<LoggingInterceptor>();
-
-            configureInterceptors?.Invoke(pipelineBuilder);
-            pipelineBuilder.Build();
-
-            return services;
-        }
+       
     }
 }

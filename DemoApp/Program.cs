@@ -30,8 +30,8 @@ namespace DemoApp
                     services.AddDatabricksDependency(
                         configureInterceptors: pipeline =>
                         {
-                           // pipeline.RemoveInterceptors();
-                            pipeline.AddInterceptor<MetricInterceptor>();
+                            //pipeline.RemoveInterceptors();
+                            //pipeline.AddInterceptor<MetricInterceptor>();
                         });
 
                     /***********************************************************************************/

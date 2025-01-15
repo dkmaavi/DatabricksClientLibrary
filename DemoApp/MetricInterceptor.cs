@@ -11,6 +11,8 @@ namespace DemoApp
         private readonly Counters counters;
         private readonly ILogger<MetricInterceptor> logger;
 
+        private int counter = 0;
+
         public InterceptorPriority Priority => InterceptorPriority.Normal;
 
         public MetricInterceptor(Counters counters, ILogger<MetricInterceptor> logger)
@@ -21,11 +23,13 @@ namespace DemoApp
 
         public async Task PreProcessAsync(StatementQuery query)
         {
+             counter++;
             await Task.CompletedTask;
         }
 
         public async Task PostProcessAsync(StatementResult statementResult)
         {
+            counter++;
             counters.ApiRequestsTotal++;
             if (statementResult.Status.State == State.Failed)
             {
@@ -40,6 +44,7 @@ namespace DemoApp
             logger.LogDebug($"ApiSuccessfulRequestsTotal - {counters.ApiSuccessfulRequestsTotal}");
             logger.LogDebug($"ApiFailedRequestsTotal - {counters.ApiFailedRequestsTotal}");
 
+            logger.LogDebug($"Counter - {counter}");
             await Task.CompletedTask;
         }
      

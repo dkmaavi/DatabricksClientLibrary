@@ -19,6 +19,8 @@ namespace DemoApp
         {
             try
             {
+
+                //var a = await new IdentityTokenService().GetAccessTokenAsync();
                 logger.LogInformation("Starting App");
 
                 await ExecuteGetQuery();
@@ -41,7 +43,7 @@ namespace DemoApp
         {
             var query = new StatementQuery
             {
-                Statement = @"SELECT * FROM software_main limit 10;",
+                Statement = @"",
                 Parameters = new List<StatementQueryParameter>
             {
                 new StatementQueryParameter

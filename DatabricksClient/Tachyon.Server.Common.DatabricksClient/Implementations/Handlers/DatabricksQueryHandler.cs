@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using System.Threading;
 using Tachyon.Server.Common.DatabricksClient.Abstractions.Handlers;
 using Tachyon.Server.Common.DatabricksClient.Abstractions.Services;
 using Tachyon.Server.Common.DatabricksClient.Exceptions;
@@ -41,10 +42,7 @@ namespace Tachyon.Server.Common.DatabricksClient.Implementations.Handlers
         {
             while (result.Status.State is State.Running or State.Pending)
             {
-                if (executionTimer.HasExceededTimeout(resilienceSettings.QueryTimeout))
-                {
-                    throw new DatabricksException(ErrorCode.TIMEOUT, $"Databricks query execution exceeded timeout of {resilienceSettings.QueryTimeout} seconds.");
-                }
+                await ValidateTimeoutIntervalAsync(executionTimer, result, cancellationToken);
 
                 logger.LogDebug("Polling Databricks query. Statement Id: {StatementId}, Current State: {State}",
                     result.StatementId, result.Status.State);
@@ -55,6 +53,15 @@ namespace Tachyon.Server.Common.DatabricksClient.Implementations.Handlers
             }
 
             return result;
+        }
+
+        private async Task ValidateTimeoutIntervalAsync(ExecutionTimer executionTimer, StatementResult result, CancellationToken cancellationToken)
+        {
+            if (executionTimer.HasExceededTimeout(resilienceSettings.QueryTimeout))
+            {
+                await communicationService.CancelStatementQueryAsync(result.StatementId, cancellationToken);
+                throw new DatabricksException(ErrorCode.TIMEOUT, $"Databricks query execution exceeded timeout of {resilienceSettings.QueryTimeout} seconds.");
+            }
         }
     }
 }

@@ -73,11 +73,11 @@ namespace Tachyon.Server.Common.DatabricksClient.Implementations.Builders
 
                     return await InvokeNext(request);
 
-                    Task SafeInvokeInterceptor(Func<Task> action, IDatabricksInterceptor interceptor, string phase)
+                    async Task SafeInvokeInterceptor(Func<Task> action, IDatabricksInterceptor interceptor, string phase)
                     {
                         try
                         {
-                            return action();
+                            await action();
                         }
                         catch (Exception ex)
                         {
@@ -89,7 +89,7 @@ namespace Tachyon.Server.Common.DatabricksClient.Implementations.Builders
                             }
 
                             logger.LogError(ex, "Non-critical error during {Phase} in interceptor {InterceptorType}. Continuing pipeline execution.", phase, interceptor.GetType().Name);
-                            return Task.CompletedTask;
+                            await Task.CompletedTask;
                         }
                     }
                 };
